@@ -26,6 +26,11 @@ class Named(models.Model):
         abstract = True
 
 
+class Feat(Named):
+    """All the things characters can train."""
+    # Prerequisites, trainer, ability score, etc. to come later.
+
+
 class Element(Named):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
@@ -40,13 +45,7 @@ class Item(Component):
 
 class Raw_Material(Named):
     """Raw material, either gathered or looted."""
-    ingredient_1 = models.ForeignKey(Element)
-    ingredient_2 = models.ForeignKey(Element, blank=True)
-
-
-class Feat(Named):
-    """All the things characters can train."""
-    # Prerequisites, trainer, ability score, etc. to come later.
+    ingredients = models.ManyToManyField(Element)
 
 
 def _recipe_factory(ingredient_table, output_table):
@@ -56,15 +55,8 @@ def _recipe_factory(ingredient_table, output_table):
 
         tier = models.PositiveIntegerField(default=1)
 
-        # Ingredients
-        ingredient_1 = models.ForeignKey(ingredient_table)
-        ingredient_1_quantity = models.PositiveIntegerField(default=1)
-        ingredient_2 = models.ForeignKey(ingredient_table, blank=True)
-        ingredient_2_quantity = models.PositiveIntegerField(blank=True)
-        ingredient_3 = models.ForeignKey(ingredient_table, blank=True)
-        ingredient_3_quantity = models.PositiveIntegerField(blank=True)
-        ingredient_4 = models.ForeignKey(ingredient_table, blank=True)
-        ingredient_4_quantity = models.PositiveIntegerField(blank=True)
+        ingredients = models.ManyToManyField(ingredient_table,
+                                             through='{name}_Measure'.format(name=ingredient_table.__name__))
 
         output = models.ForeignKey(output_table)
         output_quantity = models.PositiveIntegerField(default=1)
@@ -80,9 +72,29 @@ def _recipe_factory(ingredient_table, output_table):
     return Recipe
 
 
+def _intermediary_factory(recipe_table, ingredient_table):
+    class Intermediary(models.Model):
+        recipe = models.ForeignKey(recipe_table)
+        ingredient = models.ForeignKey(ingredient_table)
+        quantity = models.PositiveIntegerField(default=1)
+
+        class Meta:
+            abstract = True
+
+    return Intermediary
+
+
 class Refining_Recipe(Plussed, _recipe_factory(Element, Component)):
     """Recipes to turn raw materials into component ingredients for crafting."""
 
 
+class Element_Measure(_intermediary_factory(Refining_Recipe, Element)):
+    """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
+
+
 class Crafting_Recipe(Named, _recipe_factory(Item, Item)):
     """Recipes to turn ingredients into usable items."""
+
+
+class Item_Measure(_intermediary_factory(Crafting_Recipe, Item)):
+    """Intermediary table for many-to-many relationship between Crafting Recipes and Items."""
