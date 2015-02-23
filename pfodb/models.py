@@ -45,7 +45,7 @@ class Item(Component):
 
 class Raw_Material(Named):
     """Raw material, either gathered or looted."""
-    ingredients = models.ManyToManyField(Element)
+    elements = models.ManyToManyField(Element)
 
 
 def _recipe_factory(ingredient_table, output_table):
@@ -72,6 +72,14 @@ def _recipe_factory(ingredient_table, output_table):
     return Recipe
 
 
+class Refining_Recipe(Plussed, _recipe_factory(Element, Component)):
+    """Recipes to turn raw materials into component ingredients for crafting."""
+
+
+class Crafting_Recipe(Named, _recipe_factory(Item, Item)):
+    """Recipes to turn ingredients into usable items."""
+
+
 def _intermediary_factory(recipe_table, ingredient_table):
     class Intermediary(models.Model):
         recipe = models.ForeignKey(recipe_table)
@@ -84,16 +92,8 @@ def _intermediary_factory(recipe_table, ingredient_table):
     return Intermediary
 
 
-class Refining_Recipe(Plussed, _recipe_factory(Element, Component)):
-    """Recipes to turn raw materials into component ingredients for crafting."""
-
-
 class Element_Measure(_intermediary_factory(Refining_Recipe, Element)):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
-
-
-class Crafting_Recipe(Named, _recipe_factory(Item, Item)):
-    """Recipes to turn ingredients into usable items."""
 
 
 class Item_Measure(_intermediary_factory(Crafting_Recipe, Item)):
