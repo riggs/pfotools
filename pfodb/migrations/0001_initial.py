@@ -11,26 +11,12 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Component_or_Item',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=120)),
-                ('plus_value', models.PositiveIntegerField(blank=True)),
-                ('tier', models.PositiveIntegerField(default=1, choices=[(1, 'I'), (2, 'II'), (3, 'III')])),
-            ],
-            options={
-                'managed': False,
-                'db_table': 'component_and_item_view',
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
             name='Component',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(blank=True)),
-                ('tier', models.PositiveIntegerField(default=1, choices=[(1, 'I'), (2, 'II'), (3, 'III')])),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
             ],
             options={
                 'abstract': False,
@@ -38,9 +24,22 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
+            name='Component_or_Item',
+            fields=[
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('name', models.CharField(max_length=120)),
+                ('plus_value', models.PositiveIntegerField(blank=True)),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
+            ],
+            options={
+                'db_table': 'component_and_item_view',
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
             name='Component_or_Item_Measure',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('quantity', models.PositiveIntegerField(default=1)),
                 ('material', models.ForeignKey(related_name='measures', related_query_name='measure', to='pfodb.Component_or_Item')),
             ],
@@ -52,8 +51,8 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Crafting_Recipe',
             fields=[
-                ('name', models.CharField(primary_key=True, max_length=120, serialize=False)),
-                ('tier', models.PositiveIntegerField(default=1, choices=[(1, 'I'), (2, 'II'), (3, 'III')])),
+                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
                 ('required_feat_rank', models.PositiveIntegerField(default=0)),
                 ('output_quantity', models.PositiveIntegerField(default=1)),
                 ('base_crafting_seconds', models.PositiveIntegerField()),
@@ -70,7 +69,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Element',
             fields=[
-                ('name', models.CharField(primary_key=True, max_length=120, serialize=False)),
+                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
             ],
             options={
                 'abstract': False,
@@ -80,7 +79,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Element_Measure',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('quantity', models.PositiveIntegerField(default=1)),
                 ('material', models.ForeignKey(related_name='measures', related_query_name='measure', to='pfodb.Element')),
             ],
@@ -92,7 +91,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Feat',
             fields=[
-                ('name', models.CharField(primary_key=True, max_length=120, serialize=False)),
+                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
             ],
             options={
                 'abstract': False,
@@ -102,10 +101,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Item',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(blank=True)),
-                ('tier', models.PositiveIntegerField(default=1, choices=[(1, 'I'), (2, 'II'), (3, 'III')])),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
             ],
             options={
                 'abstract': False,
@@ -115,7 +114,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Raw_Material',
             fields=[
-                ('name', models.CharField(primary_key=True, max_length=120, serialize=False)),
+                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
                 ('elements', models.ManyToManyField(related_name='sources', related_query_name='source', to='pfodb.Element')),
             ],
             options={
@@ -126,10 +125,10 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Refining_Recipe',
             fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(blank=True)),
-                ('tier', models.PositiveIntegerField(default=1, choices=[(1, 'I'), (2, 'II'), (3, 'III')])),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
                 ('required_feat_rank', models.PositiveIntegerField(default=0)),
                 ('output_quantity', models.PositiveIntegerField(default=1)),
                 ('base_crafting_seconds', models.PositiveIntegerField()),
