@@ -17,24 +17,38 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(blank=True)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
-            ],
+                ],
             options={
                 'abstract': False,
-            },
+                },
             bases=(models.Model,),
-        ),
+            ),
         migrations.CreateModel(
-            name='Component_or_Item',
+            name='Item',
             fields=[
                 ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(blank=True)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
-            ],
+                ],
             options={
-                'db_table': 'component_and_item_view',
-            },
+                'abstract': False,
+                },
             bases=(models.Model,),
+            ),
+        migrations.RunSQL(
+            sql="""
+                DROP TABLE IF EXISTS "component_and_item_view" CASCADE ;
+                CREATE VIEW "component_and_item_view" AS
+                  SELECT id = row_number() OVER (ORDER BY "tier" ASC, "name" ASC, "plus_value" ASC),
+                         "name", "plus_value", "tier"
+                    FROM
+                    (
+                      SELECT "name", "plus_value", "tier" FROM pfodb_component
+                        UNION
+                      SELECT "name", "plus_value", "tier" FROM pfodb_item ORDER BY tier
+                    ) AS _;
+                """
         ),
         migrations.CreateModel(
             name='Component_or_Item_Measure',
@@ -51,7 +65,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Crafting_Recipe',
             fields=[
-                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
+                ('name', models.CharField(serialize=False, primary_key=True, max_length=120)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
                 ('required_feat_rank', models.PositiveIntegerField(default=0)),
                 ('output_quantity', models.PositiveIntegerField(default=1)),
@@ -69,7 +83,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Element',
             fields=[
-                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
+                ('name', models.CharField(serialize=False, primary_key=True, max_length=120)),
             ],
             options={
                 'abstract': False,
@@ -91,20 +105,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Feat',
             fields=[
-                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
-            ],
-            options={
-                'abstract': False,
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Item',
-            fields=[
-                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
-                ('name', models.CharField(max_length=120)),
-                ('plus_value', models.PositiveIntegerField(blank=True)),
-                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
+                ('name', models.CharField(serialize=False, primary_key=True, max_length=120)),
             ],
             options={
                 'abstract': False,
@@ -114,7 +115,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Raw_Material',
             fields=[
-                ('name', models.CharField(serialize=False, max_length=120, primary_key=True)),
+                ('name', models.CharField(serialize=False, primary_key=True, max_length=120)),
                 ('elements', models.ManyToManyField(related_name='sources', related_query_name='source', to='pfodb.Element')),
             ],
             options={
