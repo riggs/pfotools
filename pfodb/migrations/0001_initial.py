@@ -11,19 +11,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Component',
-            fields=[
-                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
-                ('name', models.CharField(max_length=120)),
-                ('plus_value', models.PositiveIntegerField(blank=True)),
-                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
-                ],
-            options={
-                'abstract': False,
-                },
-            bases=(models.Model,),
-            ),
-        migrations.CreateModel(
             name='Item',
             fields=[
                 ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
@@ -35,10 +22,23 @@ class Migration(migrations.Migration):
                 'abstract': False,
                 },
             bases=(models.Model,),
-            ),
+        ),
+        migrations.CreateModel(
+            name='Component',
+            fields=[
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('name', models.CharField(max_length=120)),
+                ('plus_value', models.PositiveIntegerField(blank=True)),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
+                ],
+            options={
+                'abstract': False,
+                },
+            bases=(models.Model,),
+        ),
         migrations.RunSQL(
             sql="""
-                DROP TABLE IF EXISTS "component_and_item_view" CASCADE ;
+                DROP TABLE IF EXISTS "component_and_item_view" CASCADE;
                 CREATE VIEW "component_and_item_view" AS
                   SELECT id = row_number() OVER (ORDER BY "tier" ASC, "name" ASC, "plus_value" ASC),
                          "name", "plus_value", "tier"
@@ -49,6 +49,20 @@ class Migration(migrations.Migration):
                       SELECT "name", "plus_value", "tier" FROM pfodb_item ORDER BY tier
                     ) AS _;
                 """
+        ),
+        migrations.CreateModel(
+            name='Component_or_Item',
+            fields=[
+                ('id', models.AutoField(auto_created=True, serialize=False, verbose_name='ID', primary_key=True)),
+                ('name', models.CharField(max_length=120)),
+                ('plus_value', models.PositiveIntegerField(blank=True)),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
+            ],
+            options={
+                'managed': False,
+                'db_table': 'component_and_item_view',
+            },
+            bases=(models.Model,),
         ),
         migrations.CreateModel(
             name='Component_or_Item_Measure',
