@@ -45,7 +45,7 @@ class Item(Component):
 
 class Raw_Material(Named):
     """Raw material, either gathered or looted."""
-    elements = models.ManyToManyField(Element)
+    elements = models.ManyToManyField(Element, related_name='sources', related_query_name='source')
 
 
 def _recipe_factory(ingredient_table, output_table):
@@ -56,9 +56,12 @@ def _recipe_factory(ingredient_table, output_table):
         tier = models.PositiveIntegerField(default=1)
 
         ingredients = models.ManyToManyField(ingredient_table,
-                                             through='{name}_Measure'.format(name=ingredient_table.__name__))
+                                             through='{name}_Measure'.format(name=ingredient_table.__name__),
+                                             related_name='uses',
+                                             related_query_name='usage')
 
-        output = models.ForeignKey(output_table)
+        output = models.OneToOneField(output_table,
+                                      related_name='{name}_recipe'.format(name=output_table.__name__))
         output_quantity = models.PositiveIntegerField(default=1)
 
         base_crafting_seconds = models.PositiveIntegerField()
@@ -82,8 +85,10 @@ class Crafting_Recipe(Named, _recipe_factory(Item, Item)):
 
 def _intermediary_factory(recipe_table, ingredient_table):
     class Intermediary(models.Model):
-        recipe = models.ForeignKey(recipe_table)
-        ingredient = models.ForeignKey(ingredient_table)
+        recipe = models.ForeignKey(recipe_table,
+                                   related_name='{name}s'.format(name=ingredient_table.__name__),
+                                   related_query_name='{name}'.format(name=ingredient_table.__name__))
+        material = models.ForeignKey(ingredient_table, related_name='measures', related_query_name='measure')
         quantity = models.PositiveIntegerField(default=1)
 
         class Meta:
