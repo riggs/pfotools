@@ -38,7 +38,7 @@ class Migration(migrations.Migration):
                       SELECT "name", "plus_value", "tier" FROM pfodb_component
                         UNION
                       SELECT "name", "plus_value", "tier" FROM pfodb_item ORDER BY tier
-                    );
+                    ) AS _;
                 """
         ),
     ]
