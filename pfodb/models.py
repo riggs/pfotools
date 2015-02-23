@@ -84,5 +84,5 @@ class Refining_Recipe(Plussed, _recipe_factory(Element, Component)):
     """Recipes to turn raw materials into component ingredients for crafting."""
 
 
-class Crafting_Recipie(Named, _recipe_factory(Item, Item)):
+class Crafting_Recipe(Named, _recipe_factory(Item, Item)):
     """Recipes to turn ingredients into usable items."""
