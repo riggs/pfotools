@@ -26,6 +26,15 @@ class Named(models.Model):
         abstract = True
 
 
+class Tiered(models.Model):
+    """Django Abstract Base Class model for entries with tier levels."""
+    tier = models.PositiveIntegerField(default=1,
+                                       choices=((1, 'I'), (2, 'II'), (3, 'III')))
+
+    class Meta:
+        abstract = True
+
+
 class Feat(Named):
     """All the things characters can train."""
     # Prerequisites, trainer, ability score, etc. to come later.
@@ -35,12 +44,20 @@ class Element(Named):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
-class Component(Plussed):
+class Component(Plussed, Tiered):
     """Output from refining process."""
 
 
-class Item(Component):
+class Item(Plussed, Tiered):
     """Output from crafting process."""
+
+
+class Component_or_Item(Plussed, Tiered):
+    """Unmanaged class for database view."""
+
+    class Meta:
+        managed = False
+        db_table = 'component_and_item_view'
 
 
 class Raw_Material(Named):
@@ -52,8 +69,6 @@ def _recipe_factory(ingredient_table, output_table):
     class Recipe(models.Model):
         required_feat = models.ForeignKey(Feat)
         required_feat_rank = models.PositiveIntegerField(default=0)
-
-        tier = models.PositiveIntegerField(default=1)
 
         ingredients = models.ManyToManyField(ingredient_table,
                                              through='{name}_Measure'.format(name=ingredient_table.__name__),
@@ -75,11 +90,11 @@ def _recipe_factory(ingredient_table, output_table):
     return Recipe
 
 
-class Refining_Recipe(Plussed, _recipe_factory(Element, Component)):
+class Refining_Recipe(Plussed, Tiered, _recipe_factory(Element, Component)):
     """Recipes to turn raw materials into component ingredients for crafting."""
 
 
-class Crafting_Recipe(Named, _recipe_factory(Item, Item)):
+class Crafting_Recipe(Named, Tiered, _recipe_factory(Component_or_Item, Item)):
     """Recipes to turn ingredients into usable items."""
 
 
@@ -101,5 +116,5 @@ class Element_Measure(_intermediary_factory(Refining_Recipe, Element)):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
 
 
-class Item_Measure(_intermediary_factory(Crafting_Recipe, Item)):
+class Component_or_Item_Measure(_intermediary_factory(Crafting_Recipe, Component_or_Item)):
     """Intermediary table for many-to-many relationship between Crafting Recipes and Items."""
