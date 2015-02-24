@@ -69,7 +69,7 @@ def import_from_PFO_wiki_data(_file):
         for element_name, quantity in zip((e1, e2, e3, e4), (q1, q2, q3, q4)):
             if element_name is None:
                 continue
-            element = _get(Element, name=element_name, tier=quality)
+            element = _get(Ingredient, name=element_name, tier=quality)
             measure = _get(Refining_Measure, recipe=recipe, material=element, quantity=quantity)
 
     retries = []

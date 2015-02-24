@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
-__all__ = ('Feat', 'Element', 'Raw_Material', 'Component', 'Item', 'Refining_Recipe', 'Crafting_Recipe',
+__all__ = ('Feat', 'Ingredient', 'Raw_Material', 'Component', 'Item', 'Refining_Recipe', 'Crafting_Recipe',
            'Refining_Measure', 'Crafting_Measure', )
 
 
@@ -54,13 +54,13 @@ class Tiered(models.Model):
         abstract = True
 
 
-class Element(Named, Tiered):
+class Ingredient(Named, Tiered):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
 class Raw_Material(Named, Tiered):
     """Raw material, either gathered or looted."""
-    elements = models.ManyToManyField(Element)
+    elements = models.ManyToManyField(Ingredient)
 
 
 class Component(Plussed, Tiered):
@@ -95,7 +95,7 @@ class Recipe(models.Model):
 
 class Refining_Recipe(Plussed, Tiered, Recipe):
     """Recipes to turn raw materials into component ingredients for crafting."""
-    ingredients = models.ManyToManyField(Element, through='Refining_Measure', related_name='used_by')
+    ingredients = models.ManyToManyField(Ingredient, through='Refining_Measure', related_name='used_by')
 
 
 class Crafting_Recipe(Named, Tiered, Recipe):
@@ -106,7 +106,7 @@ class Crafting_Recipe(Named, Tiered, Recipe):
 class Refining_Measure(models.Model):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
     recipe = models.ForeignKey(Refining_Recipe, related_name='elements', related_query_name='element')
-    material = models.ForeignKey(Element, related_name='measures', related_query_name='measure')
+    material = models.ForeignKey(Ingredient, related_name='measures', related_query_name='measure')
     quantity = models.PositiveIntegerField()
 
     class Meta:

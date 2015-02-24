@@ -3,7 +3,7 @@ from pfodb.models import *
 
 
 admin.site.register(Feat)
-admin.site.register(Element)
+admin.site.register(Ingredient)
 admin.site.register(Raw_Material)
 admin.site.register(Component)
 admin.site.register(Item)
