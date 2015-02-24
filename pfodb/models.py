@@ -1,4 +1,6 @@
 from django.db import models
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
+from django.contrib.contenttypes.models import ContentType
 
 
 class Plussed(models.Model):
@@ -52,69 +54,52 @@ class Item(Plussed, Tiered):
     """Output from crafting process."""
 
 
-class Component_or_Item(Plussed, Tiered):
-    """Unmanaged class for database view."""
-
-    class Meta:
-        managed = False
-        db_table = 'component_and_item_view'
-
-
 class Raw_Material(Named):
     """Raw material, either gathered or looted."""
     elements = models.ManyToManyField(Element, related_name='sources', related_query_name='source')
 
 
-def _recipe_factory(ingredient_table, output_table):
-    class Recipe(models.Model):
-        required_feat = models.ForeignKey(Feat)
-        required_feat_rank = models.PositiveIntegerField(default=0)
-
-        ingredients = models.ManyToManyField(ingredient_table,
-                                             through='{name}_Measure'.format(name=ingredient_table.__name__),
-                                             related_name='uses',
-                                             related_query_name='usage')
-
-        output = models.OneToOneField(output_table,
-                                      related_name='{name}_recipe'.format(name=output_table.__name__))
-        output_quantity = models.PositiveIntegerField(default=1)
-
-        base_crafting_seconds = models.PositiveIntegerField()
-        quality = models.PositiveIntegerField()
-        category = models.CharField(max_length=120)
-        achievement_type = models.CharField(max_length=120)
-
-        class Meta:
-            abstract = True
-
-    return Recipe
+class Recipe(models.Model):
+    """Django Abstract Base Class model for Recipes. Subclass & define 'ingredients' & 'output'."""
+    required_feat = models.ForeignKey(Feat)
+    required_feat_rank = models.PositiveIntegerField(default=0)
 
 
-class Refining_Recipe(Plussed, Tiered, _recipe_factory(Element, Component)):
+    output_quantity = models.PositiveIntegerField(default=1)
+
+    base_crafting_seconds = models.PositiveIntegerField()
+    quality = models.PositiveIntegerField()
+    category = models.CharField(max_length=120)
+    achievement_type = models.CharField(max_length=120)
+
+    class Meta:
+        abstract = True
+
+
+class Refining_Recipe(Plussed, Tiered, Recipe):
     """Recipes to turn raw materials into component ingredients for crafting."""
+    ingredients = models.ManyToManyField(Element, through='Element_Measure', related_name='used_by')
+    output = models.OneToOneField(Component, related_name='component_recipe')
 
 
-class Crafting_Recipe(Named, Tiered, _recipe_factory(Component_or_Item, Item)):
-    """Recipes to turn ingredients into usable items."""
-
-
-def _intermediary_factory(recipe_table, ingredient_table):
-    class Intermediary(models.Model):
-        recipe = models.ForeignKey(recipe_table,
-                                   related_name='{name}s'.format(name=ingredient_table.__name__),
-                                   related_query_name='{name}'.format(name=ingredient_table.__name__))
-        material = models.ForeignKey(ingredient_table, related_name='measures', related_query_name='measure')
-        quantity = models.PositiveIntegerField(default=1)
-
-        class Meta:
-            abstract = True
-
-    return Intermediary
-
-
-class Element_Measure(_intermediary_factory(Refining_Recipe, Element)):
+class Element_Measure(models.Model):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
+    recipe = models.ForeignKey(Refining_Recipe, related_name='elements', related_query_name='element')
+    material = models.ForeignKey(Element, related_name='measures', related_query_name='measure')
+    quantity = models.PositiveIntegerField(default=1)
 
 
-class Component_or_Item_Measure(_intermediary_factory(Crafting_Recipe, Component_or_Item)):
-    """Intermediary table for many-to-many relationship between Crafting Recipes and Items."""
+class Crafting_Recipe(Named, Tiered, Recipe):
+    """Recipes to turn ingredients into usable items."""
+    ingredients = GenericRelation('Crafted_Item_Measure', related_query_name='recipes')
+
+
+class Crafted_Item_Measure(models.Model):
+    """Intermediary table for many-to-many relationship between Crafting Recipes and Crafted Items."""
+    recipe = models.ForeignKey(Crafting_Recipe, related_name='elements', related_query_name='element')
+
+    content_type = models.ForeignKey(ContentType)
+    object_id = models.PositiveIntegerField()
+    material = GenericForeignKey('content_type', 'object_id')
+
+    quantity = models.PositiveIntegerField(default=1)
