@@ -3,4 +3,4 @@ psycopg2 >= 2.5
 sqlparse >= 0.1.13
 gnureadline >= 6.3
 ipython >= 2.4.1
-openpyxl >= 2.1.5
+openpyxl >= 2.1.4
