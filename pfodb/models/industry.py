@@ -101,7 +101,7 @@ class Refining_Bill_Of_Materials(models.Model):
     quantity = models.PositiveIntegerField()
 
     def __str__(self):
-        return "{recipe}: {quantity} {material}".format(recipe=self.recipe, quantity=self.quantity,
+        return "{quantity} {material} ({recipe})".format(recipe=self.recipe, quantity=self.quantity,
                                                         material=self.material)
 
     class Meta:
