@@ -11,10 +11,10 @@ class Feat(models.Model):
     # Prerequisites, trainer, ability score, etc. to come later.
 
     def __str__(self):
-        return "{name} {rank}".format(name=name, rank=rank)
+        return "{name} {rank}".format(name=self.name, rank=self.rank)
 
     class Meta:
         unique_together = \
-            index_together = ('name', 'rank')
+        index_together = ('name', 'rank')
 
 
