@@ -1,23 +1,12 @@
+# -*- coding: utf-8 -*-
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
-__all__ = ('Feat', 'Ingredient', 'Raw_Material', 'Component', 'Item', 'Refining_Recipe', 'Crafting_Recipe',
+from .characters import Feat
+
+__all__ = ('Ingredient', 'Raw_Material', 'Component', 'Item', 'Refining_Recipe', 'Crafting_Recipe',
            'Refining_Bill_Of_Materials', 'Crafting_Bill_Of_Materials', )
-
-
-class Feat(models.Model):
-    """All the things characters can train."""
-    name = models.CharField(max_length=120)
-    rank = models.PositiveIntegerField(default=0)
-    # Prerequisites, trainer, ability score, etc. to come later.
-
-    def __str__(self):
-        return "{name} {rank}".format(name=name, rank=rank)
-
-    class Meta:
-        unique_together = \
-        index_together = ('name', 'rank')
 
 
 class Plussed(models.Model):

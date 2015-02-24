@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import socket
