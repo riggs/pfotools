@@ -1,5 +1,5 @@
 django >= 1.7, < 1.8
-psycopg2==2.5.5
-sqlparse==0.1.14
-gnureadline==6.3.3
-ipython==2.4.1
+psycopg2 >= 2.5
+sqlparse >= 0.1.13
+gnureadline >= 6.3
+ipython >= 2.4.1

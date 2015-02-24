@@ -46,6 +46,11 @@ class Element(Named):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
+class Raw_Material(Named):
+    """Raw material, either gathered or looted."""
+    elements = models.ManyToManyField(Element, related_name='sources', related_query_name='source')
+
+
 class Component_Material(Named):
     """Output material from refining process."""
 
@@ -62,11 +67,6 @@ class Item_Type(Named):
 class Item(Plussed, Tiered):
     """Things usable by characters"""
     type = models.ForeignKey(Item_Type)
-
-
-class Raw_Material(Named):
-    """Raw material, either gathered or looted."""
-    elements = models.ManyToManyField(Element, related_name='sources', related_query_name='source')
 
 
 class Recipe(models.Model):
@@ -88,11 +88,11 @@ class Recipe(models.Model):
 
 class Refining_Recipe(Plussed, Tiered, Recipe):
     """Recipes to turn raw materials into component ingredients for crafting."""
-    ingredients = models.ManyToManyField(Element, through='Element_Measure', related_name='used_by')
+    ingredients = models.ManyToManyField(Element, through='pfodb.models.Refining_Measure', related_name='used_by')
     output = models.OneToOneField(Component, related_name='recipes', related_query_name='recipe')
 
 
-class Element_Measure(models.Model):
+class Refining_Measure(models.Model):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
     recipe = models.ForeignKey(Refining_Recipe, related_name='elements', related_query_name='element')
     material = models.ForeignKey(Element, related_name='measures', related_query_name='measure')
@@ -105,7 +105,7 @@ class Crafting_Recipe(Named, Tiered, Recipe):
     output = models.OneToOneField(Item, related_name='recipes', related_query_name='recipe')
 
 
-class Crafted_Item_Measure(models.Model):
+class Crafting_Measure(models.Model):
     """Intermediary table for many-to-many relationship between Crafting Recipes and Crafted Items."""
     recipe = models.ForeignKey(Crafting_Recipe, related_name='elements', related_query_name='element')
 
