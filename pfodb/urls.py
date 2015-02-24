@@ -1,0 +1,11 @@
+
+from django.conf.urls import patterns, url
+
+from .views import *
+
+urlpatterns = patterns('',
+    # Examples:
+    # url(r'^$', 'pfotools.views.home', name='home'),
+    url(r'^$', Industry_Index, name='industry_index'),
+    url(r'^/items/', Item, name='items'),
+)
