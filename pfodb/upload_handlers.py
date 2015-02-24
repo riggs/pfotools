@@ -70,7 +70,7 @@ def import_from_PFO_wiki_data(_file):
             if element_name is None:
                 continue
             element = _get(Ingredient, name=element_name, tier=quality)
-            measure = _get(Refining_Measure, recipe=recipe, material=element, quantity=quantity)
+            measure = _get(Refining_Bill_Of_Materials, recipe=recipe, material=element, quantity=quantity)
 
     retries = []
     def _create_crafting_measure(recipe, ingredient_name, quantity):
@@ -82,7 +82,7 @@ def import_from_PFO_wiki_data(_file):
             except Item.DoesNotExist:
                 retries.append((recipe, ingredient_name, quantity))
                 return
-        return _get(Crafting_Measure, recipe=recipe, object_id=ingredient.id, material=ingredient, quantity=quantity)
+        return _get(Crafting_Bill_Of_Materials, recipe=recipe, object_id=ingredient.id, material=ingredient, quantity=quantity)
 
     for row in crafting.rows[1:]:
         (_0,    # Ignore full name
