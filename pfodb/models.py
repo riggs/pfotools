@@ -86,31 +86,32 @@ class Recipe(models.Model):
         abstract = True
 
 
-class Refining_Recipe(Plussed, Tiered, Recipe):
-    """Recipes to turn raw materials into component ingredients for crafting."""
-    ingredients = models.ManyToManyField(Element, through='pfodb.models.Refining_Measure', related_name='used_by')
-    output = models.OneToOneField(Component, related_name='recipes', related_query_name='recipe')
-
-
 class Refining_Measure(models.Model):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
-    recipe = models.ForeignKey(Refining_Recipe, related_name='elements', related_query_name='element')
+    recipe = models.ForeignKey('Refining_Recipe', related_name='elements', related_query_name='element')
     material = models.ForeignKey(Element, related_name='measures', related_query_name='measure')
     quantity = models.PositiveIntegerField(default=1)
 
 
-class Crafting_Recipe(Named, Tiered, Recipe):
-    """Recipes to turn ingredients into usable items."""
-    ingredients = GenericRelation('Crafted_Item_Measure', related_query_name='recipes')
-    output = models.OneToOneField(Item, related_name='recipes', related_query_name='recipe')
+class Refining_Recipe(Plussed, Tiered, Recipe):
+    """Recipes to turn raw materials into component ingredients for crafting."""
+    ingredients = models.ManyToManyField(Element, through=Refining_Measure, related_name='used_by')
+    output = models.OneToOneField(Component, related_name='recipes', related_query_name='recipe')
 
 
 class Crafting_Measure(models.Model):
-    """Intermediary table for many-to-many relationship between Crafting Recipes and Crafted Items."""
-    recipe = models.ForeignKey(Crafting_Recipe, related_name='elements', related_query_name='element')
+    """Intermediary table for many-to-many relationship between Crafting Recipes and Items."""
+    recipe = models.ForeignKey('Crafting_Recipe', related_name='elements', related_query_name='element')
 
     content_type = models.ForeignKey(ContentType)
     object_id = models.PositiveIntegerField()
     material = GenericForeignKey('content_type', 'object_id')
 
     quantity = models.PositiveIntegerField(default=1)
+
+
+class Crafting_Recipe(Named, Tiered, Recipe):
+    """Recipes to turn ingredients into usable items."""
+    ingredients = GenericRelation(Crafting_Measure, related_query_name='recipes')
+    output = models.OneToOneField(Item, related_name='recipes', related_query_name='recipe')
+
