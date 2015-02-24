@@ -79,7 +79,7 @@ class Recipe(models.Model):
 class Refining_Recipe(Plussed, Tiered, Recipe):
     """Recipes to turn raw materials into component ingredients for crafting."""
     ingredients = models.ManyToManyField(Element, through='Element_Measure', related_name='used_by')
-    output = models.OneToOneField(Component, related_name='component_recipe')
+    output = models.OneToOneField(Component, related_name='recipes', related_query_name='recipe')
 
 
 class Element_Measure(models.Model):
@@ -92,6 +92,7 @@ class Element_Measure(models.Model):
 class Crafting_Recipe(Named, Tiered, Recipe):
     """Recipes to turn ingredients into usable items."""
     ingredients = GenericRelation('Crafted_Item_Measure', related_query_name='recipes')
+    output = models.OneToOneField(Item, related_name='recipes', related_query_name='recipe')
 
 
 class Crafted_Item_Measure(models.Model):
