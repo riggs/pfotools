@@ -6,7 +6,7 @@ from django.contrib.contenttypes.models import ContentType
 class Plussed(models.Model):
     """Django Abstract Base Class model for entries indexed by name & plus value."""
     name = models.CharField(max_length=120)
-    plus_value = models.PositiveIntegerField(blank=True)
+    plus_value = models.PositiveIntegerField(default=0)
 
     def __str__(self):
         return "{name} +{plus}".format(name=self.name, plus=self.plus_value)
@@ -46,12 +46,22 @@ class Element(Named):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
+class Component_Material(Named):
+    """Output material from refining process."""
+
+
 class Component(Plussed, Tiered):
-    """Output from refining process."""
+    """Specific outputs from refining process."""
+    material = models.ForeignKey(Component_Material)
+
+
+class Item_Type(Named):
+    """Output from crafting process."""
 
 
 class Item(Plussed, Tiered):
-    """Output from crafting process."""
+    """Things usable by characters"""
+    type = models.ForeignKey(Item_Type)
 
 
 class Raw_Material(Named):
