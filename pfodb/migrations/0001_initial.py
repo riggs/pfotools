@@ -14,7 +14,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Component',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(default=0)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
@@ -29,7 +29,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Crafting_Measure',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
                 ('object_id', models.PositiveIntegerField()),
                 ('quantity', models.PositiveIntegerField()),
                 ('content_type', models.ForeignKey(to='contenttypes.ContentType')),
@@ -41,22 +41,11 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Crafting_Recipe',
             fields=[
-                ('name', models.CharField(primary_key=True, max_length=120, serialize=False)),
+                ('name', models.CharField(max_length=120, serialize=False, primary_key=True)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
                 ('output_quantity', models.PositiveIntegerField()),
                 ('base_crafting_seconds', models.PositiveIntegerField()),
                 ('achievement_type', models.CharField(max_length=120)),
-            ],
-            options={
-                'abstract': False,
-            },
-            bases=(models.Model,),
-        ),
-        migrations.CreateModel(
-            name='Element',
-            fields=[
-                ('name', models.CharField(primary_key=True, max_length=120, serialize=False)),
-                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
             ],
             options={
                 'abstract': False,
@@ -66,7 +55,7 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Feat',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=120)),
                 ('rank', models.PositiveIntegerField(default=0)),
             ],
@@ -75,15 +64,26 @@ class Migration(migrations.Migration):
             bases=(models.Model,),
         ),
         migrations.CreateModel(
+            name='Ingredient',
+            fields=[
+                ('name', models.CharField(max_length=120, serialize=False, primary_key=True)),
+                ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
+            ],
+            options={
+                'abstract': False,
+            },
+            bases=(models.Model,),
+        ),
+        migrations.CreateModel(
             name='Item',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(default=0)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
                 ('category', models.CharField(max_length=120)),
                 ('quality', models.PositiveIntegerField()),
-                ('recipe', models.ForeignKey(to='pfodb.Crafting_Recipe', related_name='outputs', related_query_name='output')),
+                ('recipe', models.ForeignKey(related_query_name='output', to='pfodb.Crafting_Recipe', related_name='outputs')),
             ],
             options={
                 'abstract': False,
@@ -93,9 +93,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Raw_Material',
             fields=[
-                ('name', models.CharField(primary_key=True, max_length=120, serialize=False)),
+                ('name', models.CharField(max_length=120, serialize=False, primary_key=True)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
-                ('elements', models.ManyToManyField(to='pfodb.Element')),
+                ('elements', models.ManyToManyField(to='pfodb.Ingredient')),
             ],
             options={
                 'abstract': False,
@@ -105,9 +105,9 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Refining_Measure',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
                 ('quantity', models.PositiveIntegerField()),
-                ('material', models.ForeignKey(to='pfodb.Element', related_name='measures', related_query_name='measure')),
+                ('material', models.ForeignKey(related_query_name='measure', to='pfodb.Ingredient', related_name='measures')),
             ],
             options={
             },
@@ -116,14 +116,14 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='Refining_Recipe',
             fields=[
-                ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True, serialize=False)),
+                ('id', models.AutoField(primary_key=True, auto_created=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=120)),
                 ('plus_value', models.PositiveIntegerField(default=0)),
                 ('tier', models.PositiveIntegerField(choices=[(1, 'I'), (2, 'II'), (3, 'III')], default=1)),
                 ('output_quantity', models.PositiveIntegerField()),
                 ('base_crafting_seconds', models.PositiveIntegerField()),
                 ('achievement_type', models.CharField(max_length=120)),
-                ('ingredients', models.ManyToManyField(to='pfodb.Element', through='pfodb.Refining_Measure', related_name='used_by')),
+                ('ingredients', models.ManyToManyField(through='pfodb.Refining_Measure', to='pfodb.Ingredient', related_name='used_by')),
                 ('required_feat', models.ForeignKey(to='pfodb.Feat')),
             ],
             options={
@@ -142,7 +142,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='refining_measure',
             name='recipe',
-            field=models.ForeignKey(to='pfodb.Refining_Recipe', related_name='elements', related_query_name='element'),
+            field=models.ForeignKey(related_query_name='element', to='pfodb.Refining_Recipe', related_name='elements'),
             preserve_default=True,
         ),
         migrations.AlterUniqueTogether(
@@ -174,7 +174,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='crafting_measure',
             name='recipe',
-            field=models.ForeignKey(to='pfodb.Crafting_Recipe', related_name='ingredients', related_query_name='ingredient'),
+            field=models.ForeignKey(related_query_name='ingredient', to='pfodb.Crafting_Recipe', related_name='ingredients'),
             preserve_default=True,
         ),
         migrations.AlterUniqueTogether(
