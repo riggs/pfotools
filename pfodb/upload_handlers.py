@@ -26,7 +26,7 @@ def _get(Model, **kwargs):
     return item
 
 
-def load_from_PFO_wiki_data(_file):
+def import_from_PFO_wiki_data(_file):
     wb = load_workbook(_file)
     crafting = wb.get_sheet_by_name('Recipes (Crafting)')
     refining = wb.get_sheet_by_name('Recipes (Refining)')
