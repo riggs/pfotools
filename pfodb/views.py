@@ -30,7 +30,9 @@ class Item(View):
                 "{name} ({feat}): {ingredients}".format(
                     name=item.name, feat=item.recipe.required_feat,
                     ingredients=", ".join(
-                        '{quantity} {name}'.format(quantity=ingredient.quantity, name=ingredient.material.name)
+                        '''{quantity} <a href=../refining/{url_name}>{name}</a>'''.format(
+                            quantity=ingredient.quantity, name=ingredient.material.name,
+                            url_name=ingredient.material.name.replace(' ', '%20'))
                         for ingredient in item.recipe.bill_of_materials.all()))
                 for item in items))
 
