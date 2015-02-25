@@ -20,7 +20,11 @@ class Item(View):
         query = kwargs.get('query')
         if not query:
             return HttpResponse('Search for items in the url, e.g. crafting/bow')
-        filter_kwargs = dict(name__icontains=query.strip())
+        elif query == 'all':
+            items = models.Item.objects.all()
+        else:
+            filter_kwargs = dict(name__icontains=query.strip())
+            items = models.Item.objects.filter(**filter_kwargs)
         return HttpResponse(
             "<br>".join(
                 "{name} ({feat}): {ingredients}".format(
@@ -28,7 +32,7 @@ class Item(View):
                     ingredients=", ".join(
                         '{quantity} {name}'.format(quantity=ingredient.quantity, name=ingredient.material.name)
                         for ingredient in item.recipe.bill_of_materials.all()))
-                for item in models.Item.objects.filter(**filter_kwargs)))
+                for item in items))
 
 
 class Component(View):
@@ -37,10 +41,14 @@ class Component(View):
         query = kwargs.get('query')
         if not query:
             return HttpResponse('Search for items in the url, e.g. refining/oak')
-        filter_kwargs = dict(name__icontains=query.strip())
-        plus_value = kwargs.get('plus_value')
-        if plus_value is not None:
-            filter_kwargs['plus_value'] = int(plus_value)
+        elif query == 'all':
+            items = models.Component.objects.all()
+        else:
+            filter_kwargs = dict(name__icontains=query.strip())
+            plus_value = kwargs.get('plus_value')
+            if plus_value is not None:
+                filter_kwargs['plus_value'] = int(plus_value)
+            items = models.Component.objects.filter(**filter_kwargs)
         return HttpResponse(
             "<br>".join(
                 "{name} +{plus_value} ({feat}): {ingredients}".format(
@@ -48,4 +56,4 @@ class Component(View):
                     ingredients=", ".join(
                         '{quantity} {name}'.format(quantity=ingredient.quantity, name=ingredient.material.name)
                         for ingredient in item.recipe.bill_of_materials.all()))
-                for item in models.Component.objects.filter(**filter_kwargs)))
+                for item in items))
