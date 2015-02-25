@@ -7,5 +7,5 @@ urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'pfotools.views.home', name='home'),
     url(r'^$', Industry_Index, name='industry_index'),
-    url(r'^/items/', Item, name='items'),
+    url(r'^/items/(?P<query>\w+)$', Item, name='items'),
 )
