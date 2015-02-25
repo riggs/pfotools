@@ -51,7 +51,7 @@ MIDDLEWARE_CLASSES = (
 
 ROOT_URLCONF = 'pfotools.urls'
 
-WSGI_APPLICATION = 'pfotools.wsgi.application'
+WSGI_APPLICATION = 'wsgi.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/1.6/ref/settings/#databases

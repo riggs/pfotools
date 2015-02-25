@@ -36,8 +36,7 @@ class Named(models.Model):
 
 class Tiered(models.Model):
     """Django Abstract Base Class mixin for entries with tier levels."""
-    tier = models.PositiveIntegerField(default=1,
-                                       choices=((1, 'I'), (2, 'II'), (3, 'III')))
+    tier = models.PositiveIntegerField(default=1)
 
     class Meta:
         abstract = True
@@ -49,7 +48,7 @@ class Ingredient(Named, Tiered):
 
 class Raw_Material(Named, Tiered):
     """Raw material, either gathered or looted."""
-    elements = models.ManyToManyField(Ingredient)
+    ingredients = models.ManyToManyField(Ingredient, related_name='sources')
 
 
 class Component(Plussed, Tiered):
@@ -89,20 +88,27 @@ class Refining_Recipe(Plussed, Tiered, Recipe):
     ingredients = models.ManyToManyField(Ingredient, through='Refining_Bill_Of_Materials', related_name='used_by')
 
 
+class Crafting_Manager(models.Manager):
+    def get_queryset(self):
+        pass
+
+
 class Crafting_Recipe(Named, Tiered, Recipe):
     """Recipes to turn ingredients into usable items."""
-    ingredients = GenericRelation('Crafting_Bill_Of_Materials', related_query_name='recipes')
+    bill_of_materials = GenericRelation('Crafting_Bill_Of_Materials', related_query_name='recipes')
+    
+    # ingredients = Crafting_Manager()
 
 
 class Refining_Bill_Of_Materials(models.Model):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
-    recipe = models.ForeignKey(Refining_Recipe, related_name='elements', related_query_name='element')
+    recipe = models.ForeignKey(Refining_Recipe, related_name='bill_of_materials')
     material = models.ForeignKey(Ingredient, related_name='components', related_query_name='component')
     quantity = models.PositiveIntegerField()
 
     def __str__(self):
         return "{quantity} {material} ({recipe})".format(recipe=self.recipe, quantity=self.quantity,
-                                                        material=self.material)
+                                                         material=self.material)
 
     class Meta:
         unique_together = ('recipe', 'material')
@@ -110,17 +116,17 @@ class Refining_Bill_Of_Materials(models.Model):
 
 class Crafting_Bill_Of_Materials(models.Model):
     """Intermediary table for many-to-many relationship between Crafting Recipes and Items."""
-    recipe = models.ForeignKey(Crafting_Recipe, related_name='ingredients', related_query_name='ingredient')
+    recipe = models.ForeignKey(Crafting_Recipe, related_name='bill_of_materials')
 
     content_type = models.ForeignKey(ContentType)
-    object_id = models.PositiveIntegerField()
+    object_id = models.CharField(max_length=120)
     material = GenericForeignKey('content_type', 'object_id')
 
     quantity = models.PositiveIntegerField()
 
     def __str__(self):
         return "{quantity} {material} ({recipe})".format(recipe=self.recipe, quantity=self.quantity,
-                                                        material=self.material)
+                                                         material=self.material)
 
     class Meta:
         unique_together = ('recipe', 'object_id')

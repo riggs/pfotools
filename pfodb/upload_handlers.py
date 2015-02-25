@@ -4,8 +4,10 @@ from openpyxl import load_workbook
 from pfodb.models import *
 
 
-def update(Model, **kwargs):
+def __update(Model, **kwargs):
     """
+    Turns out this is unneeded because of Model.object.update_or_create
+
     Update and return Model entry as specified by kwargs.
 
     :param Model: Django DB Model to query.
@@ -72,20 +74,24 @@ def import_from_PFO_wiki_data(_file):
         if not __:  # Empty row
             continue
 
-        feat = update(Feat, name=feat_name, rank=feat_rank)
+        feat, _ = Feat.objects.update_or_create(name=feat_name, rank=feat_rank)
 
-        recipe = update(Refining_Recipe, name=name, plus_value=plus_value, tier=tier, required_feat=feat,
-                        output_quantity=output_quantity, base_crafting_seconds=base_crafting_seconds,
-                        achievement_type=achievement_type)
+        recipe, _ = Refining_Recipe.objects.update_or_create(name=name, plus_value=plus_value,
+                                                          defaults=dict(tier=tier, required_feat=feat,
+                                                                        output_quantity=output_quantity,
+                                                                        base_crafting_seconds=base_crafting_seconds,
+                                                                        achievement_type=achievement_type))
 
-        component = update(Component, name=name, plus_value=plus_value, tier=tier, variety=variety, quality=quality,
-                           recipe=recipe)
+        component, _ = Component.objects.update_or_create(name=name, plus_value=plus_value,
+                                                       defaults=dict(tier=tier, variety=variety, quality=quality,
+                                                                     recipe=recipe))
 
-        for element_name, quantity in zip((e1, e2, e3, e4), (q1, q2, q3, q4)):
-            if element_name is None:
+        for ingredient_name, quantity in zip((e1, e2, e3, e4), (q1, q2, q3, q4)):
+            if ingredient_name is None:
                 continue
-            element = update(Ingredient, name=element_name, tier=quality)
-            measure = update(Refining_Bill_Of_Materials, recipe=recipe, material=element, quantity=quantity)
+            ingredient, _ = Ingredient.objects.update_or_create(name=ingredient_name, defaults=dict(tier=quality))
+            measure, _ = Refining_Bill_Of_Materials.objects.update_or_create(recipe=recipe, material=ingredient,
+                                                                          defaults=dict(quantity=quantity))
 
     # Some recipes require finished items as ingredients, and those ingredients may not be in the database, yet.
     # Record spreadsheet entries that fail to find all of their ingredients.  Later, retry adding these entries to the
@@ -100,7 +106,8 @@ def import_from_PFO_wiki_data(_file):
             except Item.DoesNotExist:
                 retries.append((recipe, ingredient_name, quantity))
                 return
-        return update(Crafting_Bill_Of_Materials, recipe=recipe, object_id=ingredient.id, material=ingredient, quantity=quantity)
+        return Crafting_Bill_Of_Materials.objects.update_or_create(recipe=recipe, object_id=ingredient.id,
+                                                                   defauts=dict(material=ingredient, quantity=quantity))
 
     for row in crafting.rows[1:]:   # Skip row with column headers
         (__,    # Full name, used only to ensure row has data
@@ -128,17 +135,22 @@ def import_from_PFO_wiki_data(_file):
         if not __:  # Empty row
             continue
 
-        feat = update(Feat, name=feat_name, rank=feat_rank)
+        feat, _ = Feat.objects.update_or_create(name=feat_name, rank=feat_rank)
 
-        recipe = update(Crafting_Recipe, name=name, tier=tier, required_feat=feat, output_quantity=output_quantity,
-                        base_crafting_seconds=base_crafting_seconds, achievement_type=achievement_type)
+        recipe, _ = Crafting_Recipe.objects.update_or_create(name=name,
+                                                          defaults=dict(tier=tier, required_feat=feat,
+                                                                        output_quantity=output_quantity,
+                                                                        base_crafting_seconds=base_crafting_seconds,
+                                                                        achievement_type=achievement_type))
 
-        item = update(Item, name=name, plus_value=0, tier=tier, category=category, quality=quality, recipe=recipe)
+        item, _ = Item.objects.update_or_create(name=name, plus_value=0,
+                                             defaults=dict(tier=tier, category=category, quality=quality,
+                                                           recipe=recipe))
 
         for ingredient_name, quantity in zip((c1, c2, c3, c4), (q1, q2, q3, q4)):
             if ingredient_name is None:
                 continue
-            measure = _create_crafting_measure(recipe, ingredient_name, quantity)
+            measure, _ = _create_crafting_measure(recipe, ingredient_name, quantity)
 
     # Iteratively attempt to add entries to database that were unable to be added previously.  Circular dependencies
     # will cause RuntimeError('maximum recursion depth exceeded'), but database will be otherwise populated.
