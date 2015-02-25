@@ -22,7 +22,7 @@ class Item(View):
             return HttpResponse(
                 "<br>".join(
                     "{name} +0: {ingredients}".format(
-                        name=item.name, plus_value=plus_value, ingredients=", ".join(
+                        name=item.name, ingredients=", ".join(
                             '{quantity} {name}'.format(quantity=ingredient.quantity, name=ingredient.material.name)
                             for ingredient in item.recipe.ingredients.all()))
                     for item in models.Item.objects.filter(name__icontains=query)))
