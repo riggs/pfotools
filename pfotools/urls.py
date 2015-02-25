@@ -3,7 +3,7 @@ from django.contrib import admin
 
 from pfotools.views import Index
 
-import pfodb
+import pfodb.urls
 
 admin.autodiscover()
 
