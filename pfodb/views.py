@@ -18,11 +18,10 @@ class Item(View):
 
     def get(self, request, *args, **kwargs):
         query = kwargs.get('query')
-        plus_value = kwargs.get('plus_value', '0')
         if query:
             return HttpResponse(
                 "<br>".join(
-                    "{name} +{plus_value}: {ingredients}".format(   # Plus value not implemented
+                    "{name} +0: {ingredients}".format(
                         name=item.name, plus_value=plus_value, ingredients=", ".join(
                             '{quantity} {name}'.format(quantity=ingredient.quantity, name=ingredient.material.name)
                             for ingredient in item.recipe.ingredients.all()))
