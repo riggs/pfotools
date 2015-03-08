@@ -1,12 +1,21 @@
 # -*- coding: utf-8 -*-
+"""
+ORM Models used to represent gathered, looted, & crafted items in PFO.
+
+Some models are used to automatic generation of a (simple) REST API.
+"""
 from django.db import models
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 
 from .characters import Feat
+from ..rest_api.serializers import *
+from ..rest_api import publish, RANKING_FIELDS
 
-__all__ = ('Ingredient', 'Raw_Material', 'Component', 'Item', 'Refining_Recipe', 'Crafting_Recipe',
-           'Refining_Bill_Of_Materials', 'Crafting_Bill_Of_Materials', )
+RANKING_FIELDS.add('plus_value')
+
+from ..utils import public
+# __all__ defined by the @public decorator on objects
 
 
 class Plussed(models.Model):
@@ -42,37 +51,50 @@ class Tiered(models.Model):
         abstract = True
 
 
-class Ingredient(Named, Tiered):
+@publish('tier', sources=sources, path='raw_ingredients', used_by=used_by, name=name, url=url)
+@public
+class Raw_Ingredient(Named, Tiered):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
+@publish('tier', ingredients=ingredients, path='raw_materials', name=name, url=url)
+@public
 class Raw_Material(Named, Tiered):
     """Raw material, either gathered or looted."""
-    ingredients = models.ManyToManyField(Ingredient, related_name='sources')
+    ingredients = models.ManyToManyField(Raw_Ingredient, related_name='sources')
 
 
-class Component(Plussed, Tiered):
+@publish('tier', sources=sources, used_by=used_by, path='refined_ingredients', name=name, url=url)
+@public
+class Refined_Ingredient(Named, Tiered):
+    """Abstract designation used to determine which ingredients fulfill a recipe."""
+    used_by = GenericRelation('Crafting_Bill_Of_Materials')
+
+
+@publish('tier', 'variety', 'quality', plus='plus_value', recipe=recipe, path='refined_materials', name=name, url=url)
+@public
+class Refined_Material(Plussed, Tiered):
     """Specific outputs from refining process."""
     variety = models.CharField(max_length=120)
     quality = models.PositiveIntegerField()
     recipe = models.OneToOneField('Refining_Recipe', related_name='output')
-    used_by = GenericRelation('Crafting_Bill_Of_Materials')
-
-    class Meta(Plussed.Meta):
-        unique_together = Plussed.Meta.unique_together + ('recipe',)
+    ingredient = models.ForeignKey(Refined_Ingredient, related_name='sources')
 
 
-class Item(Plussed, Tiered):
-    """Things usable by characters"""
+@publish('tier', 'category', 'quality', recipe=recipe, used_by=used_by, name=name, url=url)
+@public
+class Equipment(Named, Tiered):
+    """Types of things usable by characters. To reference actual things at a later date."""
     category = models.CharField(max_length=120)
     quality = models.PositiveIntegerField()
-    recipe = models.ForeignKey('Crafting_Recipe', related_name='outputs', related_query_name='output')
+    recipe = models.OneToOneField('Crafting_Recipe', related_name='output')
     used_by = GenericRelation('Crafting_Bill_Of_Materials')
 
 
+@publish(name=name, url=url)  # Lack of fields provides namespace for subclasses only.
 class Recipe(models.Model):
     """Django Abstract Base Class model for Recipes. Subclass & define 'ingredients' & 'output'."""
-    required_feat = models.ForeignKey(Feat)
+    required_feat = models.ForeignKey(Feat)     # Includes rank
 
     output_quantity = models.PositiveIntegerField()
 
@@ -83,27 +105,29 @@ class Recipe(models.Model):
         abstract = True
 
 
+@publish('tier', 'base_crafting_seconds', 'output_quantity', 'achievement_type', plus='plus_value',
+         feat=required_feat, materials=materials, path='refining', name=name, url=url)
+@public
 class Refining_Recipe(Plussed, Tiered, Recipe):
     """Recipes to turn raw materials into component ingredients for crafting."""
-    ingredients = models.ManyToManyField(Ingredient, through='Refining_Bill_Of_Materials', related_name='used_by')
+    # materials = 'defined via ForeignKey on Refining_Bill_Of_Materials'
+    # output = 'defined via ForeignKey on Refined_Material'
 
 
-class Crafting_Manager(models.Manager):
-    def get_queryset(self):
-        pass
-
-
+@publish('tier', 'base_crafting_seconds', 'output_quantity', 'achievement_type',
+         feat=required_feat, materials=materials, path='crafting', name=name, url=url)
+@public
 class Crafting_Recipe(Named, Tiered, Recipe):
     """Recipes to turn ingredients into usable items."""
-    bill_of_materials = GenericRelation('Crafting_Bill_Of_Materials', related_query_name='recipes')
-    
-    # ingredients = Crafting_Manager()
+    # materials = 'defined via ForeignKey on Crafting_Bill_Of_Materials'
+    # output = 'defined via ForeignKey on Equipment'
 
 
+@public
 class Refining_Bill_Of_Materials(models.Model):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
-    recipe = models.ForeignKey(Refining_Recipe, related_name='bill_of_materials')
-    material = models.ForeignKey(Ingredient, related_name='components', related_query_name='component')
+    recipe = models.ForeignKey(Refining_Recipe, related_name='materials', related_query_name='material')
+    material = models.ForeignKey(Raw_Ingredient, related_name='used_by')
     quantity = models.PositiveIntegerField()
 
     def __str__(self):
@@ -114,9 +138,10 @@ class Refining_Bill_Of_Materials(models.Model):
         unique_together = ('recipe', 'material')
 
 
+@public
 class Crafting_Bill_Of_Materials(models.Model):
     """Intermediary table for many-to-many relationship between Crafting Recipes and Items."""
-    recipe = models.ForeignKey(Crafting_Recipe, related_name='bill_of_materials')
+    recipe = models.ForeignKey(Crafting_Recipe, related_name='materials', related_query_name='material')
 
     content_type = models.ForeignKey(ContentType)
     object_id = models.CharField(max_length=120)
@@ -129,5 +154,5 @@ class Crafting_Bill_Of_Materials(models.Model):
                                                          material=self.material)
 
     class Meta:
-        unique_together = ('recipe', 'object_id')
+        unique_together = ('recipe', 'object_id', 'content_type')
 

@@ -4,10 +4,11 @@ from pfodb.models import *
 
 
 admin.site.register(Feat)
-admin.site.register(Ingredient)
+admin.site.register(Raw_Ingredient)
 admin.site.register(Raw_Material)
-admin.site.register(Component)
-admin.site.register(Item)
+admin.site.register(Refined_Ingredient)
+admin.site.register(Refined_Material)
+admin.site.register(Equipment)
 admin.site.register(Refining_Recipe)
 admin.site.register(Crafting_Recipe)
 admin.site.register(Refining_Bill_Of_Materials)

@@ -1,9 +1,16 @@
 # -*- coding: utf-8 -*-
 from django.db import models
 
-__all__ = ('Feat', )
+from ..rest_api.serializers import *
+from ..rest_api import publish, RANKING_FIELDS
+RANKING_FIELDS.add('rank')
+
+from ..utils import public
+# __all__ defined by the @public decorator on objects
 
 
+@publish('rank', path='feats', name=name, url=url)
+@public
 class Feat(models.Model):
     """All the things characters can train."""
     name = models.CharField(max_length=120)
@@ -16,5 +23,4 @@ class Feat(models.Model):
     class Meta:
         unique_together = \
         index_together = ('name', 'rank')
-
 

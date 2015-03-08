@@ -1,3 +1,3 @@
 # -*- coding: utf-8 -*-
-from .industry import *
+from .equipment import *
 from .characters import *
