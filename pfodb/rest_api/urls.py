@@ -85,8 +85,10 @@ def build_urls(tree, namespaces):
     if Model is not None and not Model._meta.abstract:
         urls.append(url(r"^"
                          # Match 'name' to any combination of letters, space and single-quote, as 'name'
-                         "(?P<name>([^\W\d]|[ '])+)"
-                         "(\+?(?P<rank>\d))?$",     # Match optional '+2' with 2 as 'rank'
+                         "(?P<name>("
+                            "[^\W\d]|[ ']"     # [Not (not-alphanumerics or digits)] or [space or single-quote]
+                         ")+)"
+                         "(\+?(?P<rank>\d))?$",         # Match optional '+2' with 2 as 'rank'
                         response))
     return patterns('', *urls)
 
