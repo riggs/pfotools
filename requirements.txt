@@ -5,5 +5,4 @@ gnureadline >= 6.3
 ipython >= 2.4.1
 openpyxl >= 2.1.4
 django-extensions>=1.4.0
-psycopg2>=2.5
 six>=1.8
