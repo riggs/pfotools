@@ -1,4 +1,4 @@
-###PFO Tools
+#PFO Tools
 
 A website with useful tools for Pathfinder Online
 
@@ -10,7 +10,7 @@ Provides a read-only JSON REST API for accessing game data.
 
 Currently provides crafting/refining recipe information at '/pfodb/api'.
 
-#Implementation
+###Implementation
 
 pfodb.models implements a collection of django Models representing various components of PFO. Certain Models are
 tagged with a decorator that will include them in the API. The decorator contains the appropriate fields and their
