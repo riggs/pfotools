@@ -2,6 +2,8 @@
 """
 Functions to serialize attributes on models
 """
+from operator import attrgetter
+
 from .utils import name_and_url, get_entry_url
 
 from ..utils import public
@@ -9,13 +11,24 @@ from ..utils import public
 
 
 @public
-def ingredient_of(entry, request, namespaces):
-    return [name_and_url(use.recipe, request, namespaces) for use in entry.ingredient_of.all()]
+def foreign_key_field(field):
+    getter = attrgetter(field)
+    def serializer(entry, request, namespaces):
+        return name_and_url(getter(entry), request, namespaces)
+    return serializer
 
 
 @public
-def required_feat(entry, request, namespaces):
-    return name_and_url(entry.required_feat, request, namespaces)
+def reverse_foreign_keys(field):
+    getter = attrgetter(field)
+    def serializer(entry, request, namespaces):
+        return [name_and_url(item, request, namespaces) for item in getter(entry).all()]
+    return serializer
+
+
+@public
+def ingredient_of(entry, request, namespaces):
+    return [name_and_url(use.recipe, request, namespaces) for use in entry.ingredient_of.all()]
 
 
 @public
@@ -25,22 +38,7 @@ def materials(entry, request, namespaces):
 
 
 @public
-def recipe(entry, request, namespaces):
-    return name_and_url(entry.recipe, request, namespaces)
-
-
-@public
-def ingredients(entry, request, namespaces):
-    return [name_and_url(ingredient, request, namespaces) for ingredient in entry.ingredients.all()]
-
-
-@public
-def sources(entry, request, namespaces):
-    return [name_and_url(source, request, namespaces) for source in entry.sources.all()]
-
-
-@public
-def name(entry, request, namespaces):
+def name(entry, *_):
     return str(entry)
 
 

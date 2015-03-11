@@ -51,13 +51,15 @@ class Tiered(models.Model):
         abstract = True
 
 
-@publish(sources=sources, path='raw_ingredients', ingredient_of=ingredient_of, name=name, url=url)
+@publish(sources=reverse_foreign_keys('sources'), ingredient_of=ingredient_of,
+         path='raw_ingredients', name=name, url=url)
 @public
 class Raw_Ingredient(Named):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
-@publish('tier', 'variety', 'encumbrance', ingredients=ingredients, path='raw_materials', name=name, url=url)
+@publish('tier', 'variety', 'encumbrance', ingredients=reverse_foreign_keys('ingredients'),
+         path='raw_materials', name=name, url=url)
 @public
 class Raw_Material(Named, Tiered):
     """Raw material, either gathered or looted."""
@@ -66,14 +68,16 @@ class Raw_Material(Named, Tiered):
     encumbrance = models.FloatField()
 
 
-@publish('tier', sources=sources, ingredient_of=ingredient_of, path='refined_ingredients', name=name, url=url)
+@publish('tier', sources=reverse_foreign_keys('sources'), ingredient_of=ingredient_of,
+         path='refined_ingredients', name=name, url=url)
 @public
 class Refined_Ingredient(Named, Tiered):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
     ingredient_of = GenericRelation('Crafting_Bill_Of_Materials')
 
 
-@publish('tier', 'variety', 'quality', plus='plus_value', recipe=recipe, path='refined_materials', name=name, url=url)
+@publish('tier', 'variety', 'quality', plus='plus_value', recipe=foreign_key_field('recipe'),
+         ingredient=foreign_key_field('ingredient'), path='refined_materials', name=name, url=url)
 @public
 class Refined_Material(Plussed, Tiered):
     """Specific outputs from refining process."""
@@ -83,7 +87,8 @@ class Refined_Material(Plussed, Tiered):
     ingredient = models.ForeignKey(Refined_Ingredient, related_name='sources')
 
 
-@publish('tier', 'category', 'quality', recipe=recipe, ingredient_of=ingredient_of, name=name, url=url)
+@publish('tier', 'category', 'quality', recipe=foreign_key_field('recipe'), ingredient_of=ingredient_of,
+         name=name, url=url)
 @public
 class Equipment(Named, Tiered):
     """Types of things usable by characters. To reference actual things at a later date."""
@@ -108,7 +113,8 @@ class Recipe(models.Model):
 
 
 @publish('tier', 'base_crafting_seconds', 'output_quantity', 'achievement_type', plus='plus_value',
-         feat=required_feat, materials=materials, path='refining', name=name, url=url)
+         feat=foreign_key_field('required_feat'), output=foreign_key_field('output'), materials=materials,
+         path='refining', name=name, url=url)
 @public
 class Refining_Recipe(Plussed, Tiered, Recipe):
     """Recipes to turn raw materials into component ingredients for crafting."""
@@ -117,7 +123,8 @@ class Refining_Recipe(Plussed, Tiered, Recipe):
 
 
 @publish('tier', 'base_crafting_seconds', 'output_quantity', 'achievement_type',
-         feat=required_feat, materials=materials, path='crafting', name=name, url=url)
+         feat=foreign_key_field('required_feat'), output=foreign_key_field('output'), materials=materials,
+         path='crafting', name=name, url=url)
 @public
 class Crafting_Recipe(Named, Tiered, Recipe):
     """Recipes to turn ingredients into usable items."""
@@ -125,35 +132,34 @@ class Crafting_Recipe(Named, Tiered, Recipe):
     # output = 'defined via ForeignKey on Equipment'
 
 
-@public
-class Refining_Bill_Of_Materials(models.Model):
-    """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
-    recipe = models.ForeignKey(Refining_Recipe, related_name='materials', related_query_name='material')
-    material = models.ForeignKey(Raw_Ingredient, related_name='ingredient_of')
+class Bill_Of_Materials(models.Model):
     quantity = models.PositiveIntegerField()
 
     def __str__(self):
-        return "{quantity} {material} ({recipe})".format(recipe=self.recipe, quantity=self.quantity,
-                                                         material=self.material)
+        return "{quantity} {material} ({recipe})".format(
+            recipe=self.recipe, quantity=self.quantity, material=self.material)
+
+    class Meta:
+        abstract = True
+
+
+@public
+class Refining_Bill_Of_Materials(Bill_Of_Materials):
+    """Intermediary table for many-to-many relationship between Refining Recipes and Raw_Ingredients."""
+    recipe = models.ForeignKey(Refining_Recipe, related_name='materials', related_query_name='material')
+    material = models.ForeignKey(Raw_Ingredient, related_name='ingredient_of')
 
     class Meta:
         unique_together = ('recipe', 'material')
 
 
 @public
-class Crafting_Bill_Of_Materials(models.Model):
-    """Intermediary table for many-to-many relationship between Crafting Recipes and Items."""
+class Crafting_Bill_Of_Materials(Bill_Of_Materials):
+    """Intermediary table for many-to-many relationship between Crafting Recipes and Refined_Ingredients, Equipment."""
     recipe = models.ForeignKey(Crafting_Recipe, related_name='materials', related_query_name='material')
-
     content_type = models.ForeignKey(ContentType)
     object_id = models.CharField(max_length=120)
     material = GenericForeignKey('content_type', 'object_id')
-
-    quantity = models.PositiveIntegerField()
-
-    def __str__(self):
-        return "{quantity} {material} ({recipe})".format(recipe=self.recipe, quantity=self.quantity,
-                                                         material=self.material)
 
     class Meta:
         unique_together = ('recipe', 'object_id', 'content_type')
