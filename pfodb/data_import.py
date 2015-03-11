@@ -12,9 +12,10 @@ from .models.metadata import Worksheet
 
 
 worksheet_handlers = {}
-def worksheet(name):
+def worksheet(*names):
     def passthrough(func):
-        worksheet_handlers[name] = func
+        for name in names:
+            worksheet_handlers[name] = func
         return func
     return passthrough
 
@@ -107,8 +108,7 @@ def import_refining(worksheet):
         for ingredient_name, quantity in zip((e1, e2, e3, e4), (q1, q2, q3, q4)):
             if not ingredient_name:
                 continue
-            raw_ingredient, _ = Raw_Ingredient.objects.update_or_create(name=ingredient_name,
-                                                                        defaults=dict(tier=quality))
+            raw_ingredient, _ = Raw_Ingredient.objects.update_or_create(name=ingredient_name)
             measure, _ = Refining_Bill_Of_Materials.objects.update_or_create(recipe=recipe, material=raw_ingredient,
                                                                              defaults=dict(quantity=quantity))
 
@@ -179,6 +179,31 @@ def import_crafting(worksheet):
         _create_crafting_measure(*retries.pop())
 
 
+@worksheet('Raw Resources', 'Raw Salvage')
+def import_raw_materials(worksheet):
+    for row in worksheet.get_all_values()[1:]:   # Skip row with column headers
+        (resource_name,    # Full name, used only to ensure row has data
+         variety,
+         tier,
+         encumbrance,
+         ingredient1,
+         ingredient2,
+         *_     # Ignore the rest
+        ) = row   # Unpack values in cells, assign to variables
+
+        if not resource_name:  # Empty row
+            continue
+
+        raw_material, _ = Raw_Material.objects.update_or_create(
+            name=resource_name, defaults=dict(tier=tier, variety=variety, encumbrance=encumbrance))
+
+        for ingredient in (ingredient1, ingredient2):
+            if not ingredient:
+                continue
+            raw_ingredient, _ = Raw_Ingredient.objects.update_or_create(name=ingredient)
+            raw_material.ingredients.add(raw_ingredient)
+
+
 def update_tables(*args, **kwargs):
     email = os.environ.get('PFODB_GSPREAD_EMAIL')
     if email is not None:
@@ -195,15 +220,25 @@ def update_tables(*args, **kwargs):
         except gspread.AuthenticationError:
             raise RuntimeError('Invalid credentials, unable to access spreadsheets.')
 
-    spreadsheet = gc.open_by_key('1UsN8eNlnD7iM_XcFYRvVJJDGTM-0ShcOTQyGcgrxqA0')
+    sheets = [
+        '1UsN8eNlnD7iM_XcFYRvVJJDGTM-0ShcOTQyGcgrxqA0',
+        '151PH3vBnlnLWYH3rv3kqAUVJg0OLOLnItqeBxc2vhEA',
+    ]
 
-    for worksheet in spreadsheet.worksheets():
-        title = worksheet.title
-        record, _ = Worksheet.objects.get(name=title)
-        updated = datetime.strptime(worksheet.updated, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone(timedelta(0)))
-        if updated > record.updated:
-            handler = worksheet_handlers.get(title)
-            if handler is not None:
-                handler(worksheet)
-                record.updated = updated
-                record.save()
+    for sheet in sheets:
+        spreadsheet = gc.open_by_key(sheet)
+
+        for worksheet in spreadsheet.worksheets():
+            title = worksheet.title
+            record, created = Worksheet.objects.update_or_create(name=title)
+            if created:
+                print("Created", record.name)
+            updated = datetime.strptime(worksheet.updated, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone(timedelta(0)))
+            if updated > record.updated:
+                handler = worksheet_handlers.get(title)
+                if handler is not None:
+                    handler(worksheet)
+                    record.updated = updated
+                    record.save()
+
+

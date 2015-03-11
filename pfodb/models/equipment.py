@@ -51,9 +51,9 @@ class Tiered(models.Model):
         abstract = True
 
 
-@publish('tier', sources=sources, path='raw_ingredients', ingredient_of=ingredient_of, name=name, url=url)
+@publish(sources=sources, path='raw_ingredients', ingredient_of=ingredient_of, name=name, url=url)
 @public
-class Raw_Ingredient(Named, Tiered):
+class Raw_Ingredient(Named):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
