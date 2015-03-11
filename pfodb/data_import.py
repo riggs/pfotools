@@ -240,5 +240,6 @@ def update_tables(*args, **kwargs):
                     handler(worksheet)
                     record.updated = updated
                     record.save()
+                    print("Updated", record.name)
 
 
