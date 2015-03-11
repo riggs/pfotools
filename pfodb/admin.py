@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.contrib import admin
-from pfodb.models import *
+from .models import *
+from .models.metadata import Worksheet
 
 
 admin.site.register(Feat)
@@ -13,3 +14,5 @@ admin.site.register(Refining_Recipe)
 admin.site.register(Crafting_Recipe)
 admin.site.register(Refining_Bill_Of_Materials)
 admin.site.register(Crafting_Bill_Of_Materials)
+
+admin.site.register(Worksheet)

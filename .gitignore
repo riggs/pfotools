@@ -5,3 +5,5 @@ db.sqlite3
 vpython27
 
 .idea
+
+credentials.ini
