@@ -51,24 +51,26 @@ class Tiered(models.Model):
         abstract = True
 
 
-@publish('tier', sources=sources, path='raw_ingredients', used_by=used_by, name=name, url=url)
+@publish('tier', sources=sources, path='raw_ingredients', ingredient_of=ingredient_of, name=name, url=url)
 @public
 class Raw_Ingredient(Named, Tiered):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
 
 
-@publish('tier', ingredients=ingredients, path='raw_materials', name=name, url=url)
+@publish('tier', 'variety', 'encumbrance', ingredients=ingredients, path='raw_materials', name=name, url=url)
 @public
 class Raw_Material(Named, Tiered):
     """Raw material, either gathered or looted."""
     ingredients = models.ManyToManyField(Raw_Ingredient, related_name='sources')
+    variety = models.CharField(max_length=120)
+    encumbrance = models.FloatField()
 
 
-@publish('tier', sources=sources, used_by=used_by, path='refined_ingredients', name=name, url=url)
+@publish('tier', sources=sources, ingredient_of=ingredient_of, path='refined_ingredients', name=name, url=url)
 @public
 class Refined_Ingredient(Named, Tiered):
     """Abstract designation used to determine which ingredients fulfill a recipe."""
-    used_by = GenericRelation('Crafting_Bill_Of_Materials')
+    ingredient_of = GenericRelation('Crafting_Bill_Of_Materials')
 
 
 @publish('tier', 'variety', 'quality', plus='plus_value', recipe=recipe, path='refined_materials', name=name, url=url)
@@ -81,14 +83,14 @@ class Refined_Material(Plussed, Tiered):
     ingredient = models.ForeignKey(Refined_Ingredient, related_name='sources')
 
 
-@publish('tier', 'category', 'quality', recipe=recipe, used_by=used_by, name=name, url=url)
+@publish('tier', 'category', 'quality', recipe=recipe, ingredient_of=ingredient_of, name=name, url=url)
 @public
 class Equipment(Named, Tiered):
     """Types of things usable by characters. To reference actual things at a later date."""
     category = models.CharField(max_length=120)
     quality = models.PositiveIntegerField()
     recipe = models.OneToOneField('Crafting_Recipe', related_name='output')
-    used_by = GenericRelation('Crafting_Bill_Of_Materials')
+    ingredient_of = GenericRelation('Crafting_Bill_Of_Materials')
 
 
 @publish(name=name, url=url)  # Lack of fields provides namespace for subclasses only.
@@ -127,7 +129,7 @@ class Crafting_Recipe(Named, Tiered, Recipe):
 class Refining_Bill_Of_Materials(models.Model):
     """Intermediary table for many-to-many relationship between Refining Recipes and Elements."""
     recipe = models.ForeignKey(Refining_Recipe, related_name='materials', related_query_name='material')
-    material = models.ForeignKey(Raw_Ingredient, related_name='used_by')
+    material = models.ForeignKey(Raw_Ingredient, related_name='ingredient_of')
     quantity = models.PositiveIntegerField()
 
     def __str__(self):

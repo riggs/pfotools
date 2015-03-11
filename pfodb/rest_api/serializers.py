@@ -9,8 +9,8 @@ from ..utils import public
 
 
 @public
-def used_by(entry, request, namespaces):
-    return [name_and_url(use.recipe, request, namespaces) for use in entry.used_by.all()]
+def ingredient_of(entry, request, namespaces):
+    return [name_and_url(use.recipe, request, namespaces) for use in entry.ingredient_of.all()]
 
 
 @public
