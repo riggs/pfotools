@@ -199,7 +199,7 @@ def update_tables(*args, **kwargs):
 
     for worksheet in spreadsheet.worksheets():
         title = worksheet.title
-        record, _ = Worksheet.objects.update_or_create(name=title)
+        record, _ = Worksheet.objects.get(name=title)
         updated = datetime.strptime(worksheet.updated, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone(timedelta(0)))
         if updated > record.updated:
             handler = worksheet_handlers.get(title)
