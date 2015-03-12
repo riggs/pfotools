@@ -232,14 +232,14 @@ def update_tables(*args, **kwargs):
             title = worksheet.title
             record, created = Worksheet.objects.update_or_create(name=title)
             if created:
-                print("Created", record.name)
-            updated = datetime.strptime(worksheet.updated, "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone(timedelta(0)))
+                print("Created", record)
+            updated = datetime.strptime(worksheet.updated,
+                                        "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=timezone(timedelta(0)))
             if updated > record.updated:
                 handler = worksheet_handlers.get(title)
                 if handler is not None:
                     handler(worksheet)
                     record.updated = updated
                     record.save()
-                    print("Updated", record.name)
-
+                    print("Updated", record)
 
