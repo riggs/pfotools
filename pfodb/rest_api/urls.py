@@ -52,6 +52,7 @@ def build_urls(tree, namespaces):
         def response(request, **kwargs):
             name = kwargs.get('name')
             rank = kwargs.get('rank')
+            _all = kwargs.get('all')
             filter_kwargs = {}
             if name is not None:
                 filter_kwargs['name__iexact'] = name.strip()
@@ -66,7 +67,7 @@ def build_urls(tree, namespaces):
                 return render404_json('No {Model} called {query}'.format(
                                         Model=Model.__name__, query=name if not rank else name + ' +' + rank))
 
-            if name is None or len(data) > 1:   # Only return identifier & URL instead of all stats
+            if name is None or (len(data) > 1 and _all is None):   # Only return identifier & URL instead of all stats
                 data = [name_and_url(entry, request, namespaces) for entry in data]
             else:
                 data = [dict((name, get_or_call_attr(entry, value, request, namespaces))
@@ -86,9 +87,11 @@ def build_urls(tree, namespaces):
         urls.append(url(r"^"
                          # Match 'name' to any combination of letters, space and single-quote, as 'name'
                          "(?P<name>("
-                            "[^\W\d]|[ ']"     # [Not (not-alphanumerics or digits)] or [space or single-quote]
+                            "[^\W\d]|[ ']"      # [Not (not-alphanumerics or digits)] or [space or single-quote]
                          ")+)"
-                         "(\+?(?P<rank>\d))?$",         # Match optional '+2' with 2 as 'rank'
+                         "(\+?(?P<rank>\d))?"   # Match optional '+2' with 2 as 'rank'
+                         "(/(?P<all>all))?"     # Match '/all' to keyword 'all' to get full stats for multiple entries.
+                         "/?$",                 # Allow trailing slash or not.
                         response))
     return patterns('', *urls)
 
